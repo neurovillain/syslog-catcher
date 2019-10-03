@@ -1,0 +1,47 @@
+syntax = "proto3";
+package catcher;
+
+// SyslogCatcher - syslog recv service
+service SyslogCatcher {
+    // Events - subsribe to event stream of specified events.
+    rpc Events(EventRequest) returns (stream Event);
+}
+
+// EventType - recv event type consts.
+enum EventType {
+    Unknown         =  0;
+    PortUp          =  1;
+    PortDown        =  2;
+    PortLoopDetect  =  3;
+}
+
+// PortSpeed - ethernet port speed consts.
+enum PortSpeed {
+    UnknownSpeed    =  0;
+    Speed100Mb      =  1;
+    Speed10Mb       =  2;
+    Speed1Gb        =  3;
+}
+
+// PortDuplex - ethernet port duplex consts.
+enum PortDuplex {
+    UnknownDuplex   =  0;
+    Full            =  1;
+    Half            =  2;
+}
+
+// EventRequest - subscription parameters.
+message EventRequest {
+    string ClientName         = 1; // ClientName - info about client.
+    repeated EventType Events = 2; // Events - list of types of recv events.
+    repeated string Nets      = 3; // Nets - list of net in cidr(A.B.C.D/N) format.
+}
+
+// Event - parsed syslog event.
+message Event {
+    EventType Type            = 1; // Type - event type
+    string Host               = 2; // Message source host
+    uint32 Port               = 3; // port - index of source port for event
+    PortSpeed Speed          =  4; // speed - aux parameter (link up state)
+    PortDuplex Duplex        =  5; // duplex - aux parameter (link up state)
+}

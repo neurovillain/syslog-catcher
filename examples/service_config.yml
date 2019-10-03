@@ -1,0 +1,12 @@
+log:
+    level: info
+    file: service.log
+syslog:
+  listen: ":51514"
+  buf_size: 1500
+  templates:
+    - "link_up ~ $device_addr$ - - - port $device_port$ change link state to up with $port_speed$ $port_duplex$"
+    - "link_down ~ $device_addr$ - - - port $device_port$ change link state to down"
+    - "loopdetect ~ $device_addr$ - - - port $device_port$ disabled by loop detect service"
+grpc:
+  listen: ":61614"
