@@ -30,14 +30,14 @@ func newStorage() *storage {
 	}
 }
 
-// update - обновить счетчик событий по заданному порту.
+// updateCounter - обновить счетчик событий по заданному порту.
 func (s *storage) updateCounter(host string, port uint32) {
 	s.portMu.Lock()
 	defer s.portMu.Unlock()
 	s.ports[fmt.Sprintf("%s~%d", host, port)]++
 }
 
-// update - обновить счетчик событий по заданному порту.
+// getCounter - вернуть количество событий по заданному порту.
 func (s *storage) getCounter(host string, port uint32) int {
 	s.portMu.Lock()
 	defer s.portMu.Unlock()

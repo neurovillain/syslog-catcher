@@ -40,7 +40,7 @@ func newTextField(text string) *textField {
 // textField - поле (слово) текстового шаблона.
 type textField struct {
 	dataType int    // тип данных (0 - plainText)
-	text     string // текст для сверки (только в случае если dataType != 0)
+	text     string // текст для сверки (только в случае если dataType == 0)
 }
 
 // match - сверить слово с тексовым шаблоном - в случае если
