@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	// cfile - параметр запуска приложения - путь к файлу конфигурации.
 	cfile = flag.String("config", "service_config.yml", "service configuration file path")
 )
 

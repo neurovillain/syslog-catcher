@@ -5,20 +5,25 @@ import (
 	"net"
 
 	pb "github.com/neurovillain/syslog-catcher/pkg/api/proto"
+	"github.com/neurovillain/syslog-catcher/pkg/service/parser"
 	log "github.com/sirupsen/logrus"
 )
 
-// Listener - inteface of syslog recivier
+// Listener - интерфейс приема входящих сообщений SYSLOG.
 type Listener interface {
-	// Listen - recv UDP data and send it do retCh.
+	// Listen - запустить основной цикл - занять UDP порт,
+	// в цикле обработать сообщения и передать их в канал retCh.
 	Listen(chan *pb.Event)
 
-	// Close - stop processing data and quit.
+	// Counters - вернуть текущее состояние счетчиков.
+	Counters() (int, int)
+
+	// Close - завершить работу и закрыть соеднинение.
 	Close()
 }
 
-// NewListener - create new instance of listener interface.
-func NewListener(addr string, bufSize int, parser Parser) (Listener, error) {
+// NewListener - создать новый экземпляр Listener.
+func NewListener(addr string, bufSize int, parser parser.Parser) (Listener, error) {
 	if parser == nil {
 		return nil, fmt.Errorf("ptr to parser is nil")
 	}
@@ -42,42 +47,54 @@ func NewListener(addr string, bufSize int, parser Parser) (Listener, error) {
 	}, nil
 }
 
-// listener -- implementation of Listener interface.
+// listener - реализация интерфейса Listener.
 type listener struct {
 	bufSize int
-	parser  Parser
+	parser  parser.Parser
 	conn    *net.UDPConn
 	done    bool
+	result  chan *pb.Event
 
-	// debug counters
+	// Счетчики для отладки
 	recv   int
 	parsed int
 }
 
-// Listen - recv data and send it to parser ch.
+// Listen - запустить основной цикл - занять UDP порт,
+// в цикле обработать сообщения и передать их в канал retCh.
 func (l *listener) Listen(ch chan *pb.Event) {
+	l.result = ch
 	buf := make([]byte, l.bufSize)
-	for !l.done {
-		i, _, err := l.conn.ReadFromUDP(buf)
+	for {
+		n, _, err := l.conn.ReadFromUDP(buf)
 		if err != nil {
-			log.Warn(err)
+			netOpError, ok := err.(*net.OpError)
+			if ok && netOpError.Err.Error() == "use of closed network connection" {
+				return
+			}
+			log.Debugf("listener recv err - %v", err)
+			continue
 		}
-		go l.handle(ch, string(buf[:i]))
+		go l.handle(string(buf[:n]))
 	}
-	l.conn.Close()
 }
 
-// handle - process recivied message and send into channel.
-func (l *listener) handle(ch chan *pb.Event, message string) {
+// handle - обработать полученное сообщение и направить его в канал.
+func (l *listener) handle(message string) {
 	l.recv++
 	if event, err := l.parser.Parse(message); err == nil {
 		l.parsed++
-		ch <- event
+		l.result <- event
 	}
 }
 
-// Close - halt message processing.
+// Counters - вернуть текущее состояние счетчиков.
+func (l *listener) Counters() (int, int) {
+	return l.recv, l.parsed
+}
+
+// Close - завершить работу и закрыть соеднинение.
 func (l *listener) Close() {
-	l.done = true
-	log.Infof("total: recv - %d, parsed - %d", l.recv, l.parsed)
+	l.conn.Close()
+	log.Debugf("total: recv - %d, parsed - %d", l.recv, l.parsed)
 }

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	pb "github.com/neurovillain/syslog-catcher/pkg/api/proto"
-	"github.com/neurovillain/syslog-catcher/pkg/service/syslog"
+	"github.com/neurovillain/syslog-catcher/pkg/service/parser"
 )
 
 var (
@@ -52,7 +52,7 @@ var (
 			OK:     true,
 		},
 		{
-			Text: "192.168.1. - - - port 10 change link state to up with 10mb half-duplex",
+			Text: "192.168.1.10 - - - port 10 change link state to up with 10mb hax-duplex",
 			OK:   false,
 		},
 		{
@@ -82,28 +82,28 @@ var (
 			OK:   false,
 		},
 		{
-			Text: "192.168.1.108 - - - port 10 disabled by loop detected service",
+			Text: "192.168.1.108 - - - port 10 disabled by loop detect service",
 			Type: pb.EventType_PortLoopDetect,
 			Host: "192.168.1.108",
 			Port: 10,
 			OK:   true,
 		},
 		{
-			Text: "192.168.1.109 - - - port X disabled by loop detected service",
+			Text: "192.168.1.109 - - - port X disabled by loop detect service",
 			OK:   false,
 		},
 	}
 )
 
-func TestTextParser(t *testing.T) {
+func TestParser(t *testing.T) {
 
-	parser, err := syslog.NewParser(patterns)
+	p, err := parser.NewParser(patterns)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, msg := range messages {
-		event, err := parser.Parse(msg.Text)
+		event, err := p.Parse(msg.Text)
 		if err != nil {
 			if msg.OK {
 				t.Fatal("unexpected result - failed to parse normal message", err)

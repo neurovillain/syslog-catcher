@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Config - application configuration parameters.
+// Config - параметры сервиса.
 type Config struct {
 	Log struct {
 		Level string `yaml:"level"`
@@ -23,7 +23,7 @@ type Config struct {
 	} `yaml:"grpc"`
 }
 
-// isValid - сheck current configuration state. returns nil if no errors are found.
+// isValid - проверка корректности входящих данных.
 func (c *Config) isValid() error {
 	if len(c.Log.Level) == 0 {
 		return fmt.Errorf("log level are not set")
@@ -44,8 +44,7 @@ func (c *Config) isValid() error {
 	return nil
 }
 
-// ParseFile - load configuration parameters from file. name - path to yaml config file,
-// returns - parsed config struct or error, if occured.
+// ParseFile - загрузить данные конфигурации из файла.
 func ParseFile(name string) (*Config, error) {
 	buf, err := ioutil.ReadFile(name)
 	if err != nil {

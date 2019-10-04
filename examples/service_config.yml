@@ -1,6 +1,10 @@
-log:
-    level: info
-    file: service.log
+# Параметры работы со входящими сообщениями
+# listen - порт входящих сообщений
+# buf_size - размер буфера входящих сообщений (максимальный размер сообщения)
+# templates - набор шаблонов обработки данных, 
+#   допустимые типы событий (указываются в начале строки и отделены " ~ ") - link_up, link_down, loopdetect,
+#   допустимые типы данных - (экранируются символами " $ ") - device_addr(адрес отправителя), device_port(порт устройства),
+#   port_speed, port_duplex - параметры соединения при подключении к заданному порту.
 syslog:
   listen: ":51514"
   buf_size: 1500
@@ -8,5 +12,18 @@ syslog:
     - "link_up ~ $device_addr$ - - - port $device_port$ change link state to up with $port_speed$ $port_duplex$"
     - "link_down ~ $device_addr$ - - - port $device_port$ change link state to down"
     - "loopdetect ~ $device_addr$ - - - port $device_port$ disabled by loop detect service"
+    - "link_up ~ $device_addr$ info: interface $device_port$ UP $port_speed$ $port_duplex$"
+    - "link_down ~ $device_addr$ info: interface $device_port$ DOWN"
+    - "loopdetect ~ $device_addr$ warn: loop detected on inteface $device_port$"
+
+# Параметры работы сервера GRPC
+# listen - порт клиентских запросов
 grpc:
   listen: ":61614"
+
+# Настройки логирования сообщений
+# level - уровень отладки
+# file - выходной файл для сообщений отладки
+log:
+    level: debug
+    file: catcher.log

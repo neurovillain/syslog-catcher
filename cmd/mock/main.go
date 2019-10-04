@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 )
 
 var (
+	// target - адрес сервера-получателя текстовых сообщений.
 	target = flag.String("target", "127.0.0.1:51514", "send syslog to address")
 )
 
@@ -29,7 +31,7 @@ func main() {
 
 	conn, err := net.DialUDP("udp", nil, addr)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("connect to syslog-catcher server failed - %v", err)
 	}
 
 	done := false
@@ -49,32 +51,69 @@ func main() {
 
 	done = true
 	conn.Close()
-
 }
 
-// flood - create random syslog message.
+// flood - сгенерировать случайное сообщение по шаблону существующего или содержащее случайное количество полей "flood".
 func flood() []byte {
 	var s string
 	switch rand.Intn(10) {
 	case 0:
-		s = fmt.Sprintf("192.168.1.%d - - - port %d change link state to up with 10MB FULL", rand.Intn(254)+1, rand.Intn(10)+1)
+		s = fmt.Sprintf("%s - - - port %s change link state to up with %s", randomAddr(), randomPort(), randomSpeed())
 	case 1:
-		s = fmt.Sprintf("192.168.1.%d - - - port Eth1/0/%d change link state to up with 100MB half-duplex", rand.Intn(254)+1, rand.Intn(10)+1)
+		s = fmt.Sprintf("%s - - - port %s change link state to down", randomAddr(), randomPort())
 	case 2:
-		s = fmt.Sprintf("192.168.1.%d - - - port %d change link state to down", rand.Intn(254)+1, rand.Intn(10)+1)
+		s = fmt.Sprintf("%s - - -  port %s disabled by loop detect service", randomAddr(), randomPort())
 	case 3:
-		s = fmt.Sprintf("192.168.1.%d - - - port %d disabled by loop detect service", rand.Intn(254)+1, rand.Intn(10)+1)
+		s = fmt.Sprintf("%s info: interface %s UP %s", randomAddr(), randomPort(), randomSpeed())
 	case 4:
-		s = fmt.Sprintf("172.16.0.%d - - - port Ethernet1/%d change link state to up with 100MB half-duplex", rand.Intn(254)+1, rand.Intn(10)+1)
+		s = fmt.Sprintf("%s info: interface %s  DOWN", randomAddr(), randomPort())
 	case 5:
-		s = fmt.Sprintf("172.16.0.%d - - - port %d change link state to up with 10 full-duplex", rand.Intn(254)+1, rand.Intn(10)+1)
-	case 6:
-		s = fmt.Sprintf("172.16.0.%d - - - port Eth1/0/%d change link state to 100MB full-duplex", rand.Intn(254)+1, rand.Intn(10)+1)
-	case 7:
-		s = fmt.Sprintf("172.16.0.%d - - - port %d disabled by loop detect service", rand.Intn(254)+1, rand.Intn(10)+1)
+		s = fmt.Sprintf("%s warn: loop detected on inteface %s", randomAddr(), randomPort())
 	default:
-		s = "127.0.0.1 - - - random flood message"
+		s = fmt.Sprintf("%s - %s", randomAddr(), strings.Repeat("flood ", rand.Intn(15)+1))
 	}
-	log.Infof("send message - %s", s)
+	log.Infof("sending message - %s", s)
 	return []byte(s)
+}
+
+func randomAddr() string {
+	if rand.Intn(4)%2 == 0 {
+		return fmt.Sprintf("192.168.0.%d", rand.Intn(10)+1)
+	}
+
+	return fmt.Sprintf("10.0.0.%d", rand.Intn(10)+1)
+}
+
+func randomPort() string {
+	if rand.Intn(4)%2 == 0 {
+		return fmt.Sprintf("Ethernet1/0/%d", rand.Intn(10)+1)
+	}
+
+	return fmt.Sprintf("%d", rand.Intn(10))
+}
+
+func randomSpeed() string {
+	var speed, duplex string
+	switch rand.Intn(3) {
+	case 0:
+		speed = "10"
+	case 1:
+		speed = "100"
+	default:
+		speed = "1000"
+	}
+	switch rand.Intn(2) {
+	case 0:
+		duplex = "full"
+	case 1:
+		duplex = "half"
+	}
+	switch rand.Intn(3) {
+	case 0:
+		return fmt.Sprintf("%sMB %s-duplex", speed, strings.ToUpper(duplex))
+	case 1:
+		return fmt.Sprintf("(speed:%s, duplex:%s)", speed, duplex)
+	}
+
+	return fmt.Sprintf("%s %s", speed, duplex)
 }

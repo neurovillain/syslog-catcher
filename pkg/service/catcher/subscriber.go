@@ -15,12 +15,12 @@ type subscriber struct {
 	nets   []*net.IPNet
 }
 
-// newSubscriber -create new instance of grpc subsriber.
+// newSubscriber - создать новый экземпляр подписчика на сообщения.
 // events -  requested event-types,
 // nets - networks for processing.
 func newSubscriber(name string, events []pb.EventType, nets []string) (*subscriber, error) {
 	if len(events) == 0 {
-		return nil, fmt.Errorf("no events for service %s", name)
+		return nil, fmt.Errorf("create subscriber - no events for service %s", name)
 	}
 	c := &subscriber{
 		name:   name,
@@ -41,7 +41,7 @@ func newSubscriber(name string, events []pb.EventType, nets []string) (*subscrib
 	return c, nil
 }
 
-// pull - try to send message to subscriber.
+// pull - передать сообщение подписчику.
 func (c *subscriber) pull(msg *pb.Event) {
 	if len(c.events) != 0 {
 		if _, ok := c.events[msg.Type]; !ok {
