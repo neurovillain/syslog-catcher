@@ -1,13 +1,13 @@
 syntax = "proto3";
 package catcher;
 
-// SyslogCatcher - syslog recv service
+// SyslogCatcher - сервис обработки входящих syslog-сообщений
 service SyslogCatcher {
-    // Events - subsribe to event stream of specified events.
+    // Events - подключится к потоку рассылки входящих сообщений.
     rpc Events(EventRequest) returns (stream Event);
 }
 
-// EventType - recv event type consts.
+// EventType - тип сообытия.
 enum EventType {
     Unknown         =  0;
     PortUp          =  1;
@@ -15,7 +15,7 @@ enum EventType {
     PortLoopDetect  =  3;
 }
 
-// PortSpeed - ethernet port speed consts.
+// PortSpeed - варианты скорости порта на устройстве.
 enum PortSpeed {
     UnknownSpeed    =  0;
     Speed100Mb      =  1;
@@ -23,25 +23,25 @@ enum PortSpeed {
     Speed1Gb        =  3;
 }
 
-// PortDuplex - ethernet port duplex consts.
+// PortDuplex - варианты состояние дуплекса.
 enum PortDuplex {
     UnknownDuplex   =  0;
     Full            =  1;
     Half            =  2;
 }
 
-// EventRequest - subscription parameters.
+// EventRequest - запрос на подключение к потоку данных.
 message EventRequest {
-    string ClientName         = 1; // ClientName - info about client.
-    repeated EventType Events = 2; // Events - list of types of recv events.
-    repeated string Nets      = 3; // Nets - list of net in cidr(A.B.C.D/N) format.
+    string ClientName         = 1; // Имя клиента (сервиса).
+    repeated EventType Events = 2; // Список событий, которые отправляются клиенту.
+    repeated string Nets      = 3; // Список сетей в формате CIDR(A.B.C.D/N).
 }
 
-// Event - parsed syslog event.
+// Event - событие.
 message Event {
-    EventType Type            = 1; // Type - event type
-    string Host               = 2; // Message source host
-    uint32 Port               = 3; // port - index of source port for event
-    PortSpeed Speed          =  4; // speed - aux parameter (link up state)
-    PortDuplex Duplex        =  5; // duplex - aux parameter (link up state)
+    EventType Type            = 1; // Тип события
+    string Host               = 2; // Адрес устройства-отправителя сообщения.
+    uint32 Port               = 3; // Индекс порта, на котором произошло событие.
+    PortSpeed Speed          =  4; // Скорость подключения на порту
+    PortDuplex Duplex        =  5; // Формат передачи данных на порту
 }
